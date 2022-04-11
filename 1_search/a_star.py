@@ -1,19 +1,18 @@
 import sys
 import maze
-import maze.frontiers as frontiers
 
 if len(sys.argv) != 2:
-    sys.exit("Usage: python unformed.py maze.txt")
+    sys.exit("Usage: python a_star.py maze.txt")
 
-m = maze.Maze(sys.argv[1], frontiers.StackFrontier)
+m = maze.Maze(sys.argv[1], maze.ManhattanCostFrontier)
 print("Maze:")
 m.print()
-print("Solving...")
+print("Solving...\n")
 m.solve()
 print("Solution:")
 m.print()
 print("States explored: ", m.num_explored)
-m.output_image("uninformed.png", show_explored=True)
+m.output_image("images/a_star.png", show_explored=True)
 
 if m.solution != None:
     print("Path: ", m.solution["actions"])

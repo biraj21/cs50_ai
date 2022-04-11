@@ -1,16 +1,18 @@
 import sys
 import maze
-import maze.frontiers as frontiers
 
-m = maze.Maze(sys.argv[1], frontiers.ManhattenFrontier)
+if len(sys.argv) != 2:
+    sys.exit("Usage: python dfs.py maze.txt")
+
+m = maze.Maze(sys.argv[1], maze.StackFrontier)
 print("Maze:")
 m.print()
-print("Solving...")
+print("Solving...\n")
 m.solve()
 print("Solution:")
 m.print()
 print("States explored: ", m.num_explored)
-m.output_image(f"{__file__}.png", show_explored=True)
+m.output_image("images/dfs.png", show_explored=True)
 
 if m.solution != None:
     print("Path: ", m.solution["actions"])

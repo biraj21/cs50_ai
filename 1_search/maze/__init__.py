@@ -1,11 +1,111 @@
+import math
 from PIL import Image, ImageDraw
 
 
 class Node:
-    def __init__(self, state, parent, action):
+    def __init__(self, state, parent, action, cost=0):
         self.state = state  # state of this node
         self.parent = parent  # reference to parent node
         self.action = action  # action taken to reach this state
+        self.cost = cost  # cost incurred to reach this state
+
+
+class StackFrontier:
+    """
+        For Depth-First Search algorithm.
+    """
+
+    def __init__(self):
+        self.frontier = []
+
+    def add(self, node):
+        self.frontier.append(node)
+
+    def contains_state(self, state):
+        return any(node.state == state for node in self.frontier)
+
+    def is_empty(self):
+        return len(self.frontier) == 0
+
+    def remove(self):
+        if self.is_empty():
+            raise Exception("empty frontier")
+        else:
+            node = self.frontier[-1]
+            self.frontier = self.frontier[:-1]
+            return node
+
+
+class QueueFrontier(StackFrontier):
+    """
+        For Breadth-First Search algorithm. Always finds the shortest path.
+    """
+
+    def remove(self):
+        if self.is_empty():
+            raise Exception("empty frontier")
+        else:
+            node = self.frontier[0]
+            self.frontier = self.frontier[1:]
+            return node
+
+
+def manhattan_distance(x1, y1, x2, y2):
+    return abs(x2 - x1) + abs(y2 - y1)
+
+
+class ManhattanFrontier(StackFrontier):
+    """
+        For Greedy Best-First Search algorithm.
+    """
+
+    def remove(self):
+        if self.is_empty():
+            raise Exception("empty frontier")
+        else:
+            # remove the node that is estimated to be the closest to the goal
+            min = math.inf
+            for node in self.frontier:
+                if node.state == self.goal:
+                    self.frontier.remove(node)
+                    return node
+                else:
+                    dist = manhattan_distance(
+                        node.state[0], node.state[1], self.goal[0], self.goal[1]
+                    )
+                    if dist < min:
+                        min = dist
+                        min_node = node
+
+            self.frontier.remove(min_node)
+            return min_node
+
+
+class ManhattanCostFrontier(StackFrontier):
+    """
+        For A* Search algorithm.
+    """
+
+    def remove(self):
+        if self.is_empty():
+            raise Exception("empty frontier")
+        else:
+            # remove the node that is estimated to be the closest to the goal
+            min = math.inf
+            for node in self.frontier:
+                if node.state == self.goal:
+                    self.frontier.remove(node)
+                    return node
+                else:
+                    dist = node.cost + manhattan_distance(
+                        node.state[0], node.state[1], self.goal[0], self.goal[1]
+                    )
+                    if dist < min:
+                        min = dist
+                        min_node = node
+
+            self.frontier.remove(min_node)
+            return min_node
 
 
 class Maze:
@@ -127,7 +227,8 @@ class Maze:
             # add next routes to the frontier
             for action, state in self.routes(node.state):
                 if state not in self.explored and not frontier.contains_state(state):
-                    new_node = Node(state=state, parent=node, action=action)
+                    new_node = Node(state=state, parent=node,
+                                    action=action, cost=node.cost + 1)
                     frontier.add(new_node)
 
     def output_image(self, filename, show_solution=True, show_explored=False):

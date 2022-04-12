@@ -1,10 +1,11 @@
 import math
 from PIL import Image, ImageDraw
+import sys
 
 
 class Node:
     def __init__(self, state, parent, action, cost=0):
-        self.state = state  # state of this node
+        self.state = state  # state of this node (coordinates here)
         self.parent = parent  # reference to parent node
         self.action = action  # action taken to reach this state
         self.cost = cost  # cost incurred to reach this state
@@ -12,7 +13,7 @@ class Node:
 
 class StackFrontier:
     """
-        For Depth-First Search algorithm.
+    For Depth-First Search algorithm.
     """
 
     def __init__(self):
@@ -38,7 +39,7 @@ class StackFrontier:
 
 class QueueFrontier(StackFrontier):
     """
-        For Breadth-First Search algorithm. Always finds the shortest path.
+    For Breadth-First Search algorithm. Always finds the shortest path.
     """
 
     def remove(self):
@@ -56,8 +57,14 @@ def manhattan_distance(x1, y1, x2, y2):
 
 class ManhattanFrontier(StackFrontier):
     """
-        For Greedy Best-First Search algorithm.
+    For Greedy Best-First Search algorithm.
     """
+
+    @staticmethod
+    def calc_distance(node, goal):
+        return manhattan_distance(
+            node.state[0], node.state[1], goal[0], goal[1]
+        )
 
     def remove(self):
         if self.is_empty():
@@ -70,9 +77,7 @@ class ManhattanFrontier(StackFrontier):
                     self.frontier.remove(node)
                     return node
                 else:
-                    dist = manhattan_distance(
-                        node.state[0], node.state[1], self.goal[0], self.goal[1]
-                    )
+                    dist = self.calc_distance(node, self.goal)
                     if dist < min:
                         min = dist
                         min_node = node
@@ -81,40 +86,21 @@ class ManhattanFrontier(StackFrontier):
             return min_node
 
 
-class ManhattanCostFrontier(StackFrontier):
+class ManhattanCostFrontier(ManhattanFrontier):
     """
-        For A* Search algorithm.
+    For A* Search algorithm. Always finds the shortest path, assuming
+    that the heuristic is admissible.
     """
 
-    def remove(self):
-        if self.is_empty():
-            raise Exception("empty frontier")
-        else:
-            # remove the node that is estimated to be the closest to the goal
-            min = math.inf
-            for node in self.frontier:
-                if node.state == self.goal:
-                    self.frontier.remove(node)
-                    return node
-                else:
-                    dist = node.cost + manhattan_distance(
-                        node.state[0], node.state[1], self.goal[0], self.goal[1]
-                    )
-                    if dist < min:
-                        min = dist
-                        min_node = node
-
-            self.frontier.remove(min_node)
-            return min_node
+    @staticmethod
+    def calc_distance(node, goal):
+        return node.cost + manhattan_distance(
+            node.state[0], node.state[1], goal[0], goal[1]
+        )
 
 
 class Maze:
-    UP = "UP"
-    DOWN = "DOWN"
-    LEFT = "LEFT"
-    RIGHT = "RIGHT"
-
-    def __init__(self, filename, frontier):
+    def __init__(self, filename, Frontier):
         with open(filename) as file:
             contents = file.read()
 
@@ -127,7 +113,7 @@ class Maze:
         contents = contents.splitlines()
         self.height = len(contents)
         self.width = max(len(line) for line in contents)
-        self.frontier = frontier
+        self.Frontier = Frontier
         self.solution = None
 
         self.walls = []
@@ -171,10 +157,10 @@ class Maze:
     def routes(self, state):
         x, y = state
         coords = [
-            (Maze.UP, (x, y - 1)),
-            (Maze.DOWN, (x, y + 1)),
-            (Maze.LEFT, (x - 1, y)),
-            (Maze.RIGHT, (x + 1, y)),
+            ("UP", (x, y - 1)),
+            ("DOWN", (x, y + 1)),
+            ("LEFT", (x - 1, y)),
+            ("RIGHT", (x + 1, y)),
         ]
 
         actions = []
@@ -190,9 +176,12 @@ class Maze:
 
         # initial state
         start = Node(state=self.start, parent=None, action=None)
-        frontier = self.frontier()
-        frontier.goal = self.goal
+        frontier = self.Frontier()
         frontier.add(start)
+
+        # goal will be used to calculate the heuristic in remove() method
+        # of MahnattanFrontier and ManhattanCostFrontier objects
+        frontier.goal = self.goal
 
         # states that have been explored
         self.explored = set()
@@ -200,8 +189,7 @@ class Maze:
         while True:
             # if frontier is empty, no solution
             if frontier.is_empty():
-                print("no solution")
-                return
+                sys.exit("no solution")
 
             # choose a node from the frontier
             node = frontier.remove()
@@ -262,7 +250,8 @@ class Maze:
                 # for explored nodes
                 elif show_explored and solution != None and (x, y) in self.explored:
                     fill = (212, 97, 85)
-                else:  # for empty cells
+                # for empty cells
+                else:
                     fill = (237, 240, 252)
 
                 # Draw cell

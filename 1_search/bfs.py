@@ -11,8 +11,6 @@ print("Solving...\n")
 m.solve()
 print("Solution:")
 m.print()
-print("States explored: ", m.num_explored)
+print("States explored:", m.num_explored)
+print("Path:", m.solution["actions"])
 m.output_image("images/bfs.png", show_explored=True)
-
-if m.solution != None:
-    print("Path: ", m.solution["actions"])

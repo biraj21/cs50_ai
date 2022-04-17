@@ -20,6 +20,9 @@ symbols = suspects + rooms + weapons
 
 
 def check_knowledge(knowledge):
+    print(knowledge)
+    print()
+
     for sym in symbols:
         # check if this card is surely 'there' inside the envelope
         if model_check(knowledge, sym):
@@ -33,6 +36,9 @@ def check_knowledge(knowledge):
         else:
             print(f"{sym}: MAYBE")
 
+    print("-" * 50)
+    print()
+
 
 # any of the suspects, rooms and weapons are there inside the envelope
 knowledge = And(
@@ -40,17 +46,25 @@ knowledge = And(
     Or(*rooms),
     Or(*weapons)
 )
-print(knowledge)
-print()
 
 check_knowledge(knowledge)
-print("-" * 50)
-
 
 # my cards
-knowledge.add(Not(plum))
-knowledge.add(Not(ballroom))
-print(knowledge)
-print()
+knowledge.add(And(
+    Not(mustard), Not(kitchen), Not(revolver)
+))
 
 check_knowledge(knowledge)
+
+# unknown card
+knowledge.add(Or(
+    Not(scarlet), Not(library), Not(wrench)
+))
+
+# known cards
+knowledge.add(Not(plum))
+knowledge.add(Not(ballroom))
+
+check_knowledge(knowledge)
+
+# will properly understand this after I understand the Clue game

@@ -257,7 +257,7 @@ def model_check(knowledge, query):
     return check_all(knowledge, query, symbols, dict())
 
 
-# a not so good implementation of model_check()
+# my not so good implementation of model_check()
 # def model_check(knowledge, query):
 #     """Checks if knowledge base entails query."""
 
